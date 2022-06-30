@@ -2,11 +2,15 @@ package SpringDataJPA.datajpa.repository;
 
 import SpringDataJPA.datajpa.dto.MemberDTO;
 import SpringDataJPA.datajpa.entity.Member;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface MemberRepository extends JpaRepository<Member, Long> {
 
@@ -32,4 +36,12 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     //컬렉션 파라미터 바인딩
     @Query("select m from Member m where m.username in :names")
     List<Member> findByNames(@Param("names") List<String> names);
+
+    List<Member> findListByUsername(String username);           //컬렉션
+    Member findMemberByUsername(String username);               //단건
+    Optional<Member> findOptionalByUsername(String username);   //단건
+
+    //페이징
+    @Query(value = "select m from Member m", countQuery = "select count(m.username) from Member m")
+    Page<Member> findByAge(int age, Pageable pageable);
 }
