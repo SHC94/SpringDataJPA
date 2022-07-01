@@ -5,10 +5,11 @@ import SpringDataJPA.datajpa.entity.Member;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
+import javax.persistence.LockModeType;
+import javax.persistence.QueryHint;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,4 +45,39 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     //페이징
     @Query(value = "select m from Member m", countQuery = "select count(m.username) from Member m")
     Page<Member> findByAge(int age, Pageable pageable);
+
+    //벌크성 수정 쿼리
+    @Modifying(clearAutomatically = true) // == executeUpdate
+    @Query("update Member m set m.age = m.age + 1 where m.age >= :age")
+    int bulkAgePlus(@Param("age") int age);
+
+    //entityGraph - JPQL FETCH JOIN
+    @Query("select m from Member m join fetch m.team")
+    List<Member> findMemberFetchJoin();
+
+    //entityGraph - 공통 메서드 오버라이드
+    @Override
+    @EntityGraph(attributePaths = {"team"})
+    List<Member> findAll();
+
+    //entityGraph - JPQL + entityGraph
+    @EntityGraph(attributePaths = {"team"})
+    @Query("select m from Member m")
+    List<Member> findMemberEntityGraph();
+
+    //entityGraph - 메서드 이름 활용 + entityGraph
+    @EntityGraph(attributePaths = {"team"})
+    List<Member> findEntityGraphByUsername(String username);
+
+    //쿼리 힌트
+    @QueryHints(
+            value = @QueryHint(
+                    name = "org.hibernate.readOnly", value = "true"
+                )
+            )
+    Member findReadOnlyByUsername(String username);
+
+    //LOCK
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    List<Member> findLockByUsername(String username);
 }
